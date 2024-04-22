@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   pipex.h                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tigpetro <tigpetro@student.42.fr>          +#+  +:+       +#+        */
+/*   By: senate <senate@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/04/12 02:46:40 by senate            #+#    #+#             */
-/*   Updated: 2024/04/22 20:18:07 by tigpetro         ###   ########.fr       */
+/*   Updated: 2024/04/23 03:13:46 by senate           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,7 @@ typedef struct s_pipex
 }	t_pipex;
 
 // pipex
-int		pipex(char **env, char **av, t_pipex *pip);
+void	pipex(char **env, char **av, t_pipex *pip, int ac);
 
 // utils
 void	destroy(t_pipex *pip);
@@ -41,6 +41,6 @@ char	*get_path(char **env);
 
 // checks
 int		check_pipex(t_pipex *pip, char **av, char **env);
-void	get_commands(char **av, t_pipex *pip);
+int		get_commands(char **av, t_pipex *pip);
 
 #endif //PIPEX_H

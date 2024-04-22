@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   pipex_utils.c                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tigpetro <tigpetro@student.42.fr>          +#+  +:+       +#+        */
+/*   By: senate <senate@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/04/16 02:17:58 by senate            #+#    #+#             */
-/*   Updated: 2024/04/22 20:08:35 by tigpetro         ###   ########.fr       */
+/*   Updated: 2024/04/23 03:08:29 by senate           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,16 +19,16 @@ void	destroy(t_pipex *pip)
 		free(*(pip->new_env));
 		pip->new_env++;
 	}
-	while (*(pip->cmds))
-	{
-		while (**(pip->cmds))
-		{
-			free(**(pip->cmds));
-			*(pip->cmds)++;
-		}
-		free(*(pip->cmds));
-		pip->cmds++;
-	}
+	// while (*(pip->cmds))
+	// {
+	// 	while (**(pip->cmds))
+	// 	{
+	// 		free(**(pip->cmds));
+	// 		(*(pip->cmds))++;
+	// 	}
+	// 	free(*(pip->cmds));
+	// 	pip->cmds++;
+	// }
 	free(pip->cmds);
 	free(pip->new_env);
 	free(pip->fd);
@@ -42,7 +42,7 @@ char	*get_path(char **env)
 	i = -1;
 	while (env[++i])
 	{
-		path = ft_strnstr(env[i], "PATH=", ft_strlen(env[i]));
+		path = ft_strnstr(env[i], "PATH=/", ft_strlen(env[i]));
 		if (path)
 		{
 			while (*path != '/')

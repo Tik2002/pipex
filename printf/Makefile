@@ -1,6 +1,5 @@
 NAME = libftprintf.a
 SRCSPATH = ./srcs/
-#OBJSPATH = ./objs/
 LIBFTPATH = ./libft/
 INCPATH = ./includes/ ./libft/
 

@@ -3,23 +3,23 @@
 /*                                                        :::      ::::::::   */
 /*   pipex.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: tigpetro <tigpetro@student.42.fr>          +#+  +:+       +#+        */
+/*   By: senate <senate@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/04/12 02:46:21 by senate            #+#    #+#             */
-/*   Updated: 2024/04/22 20:18:24 by tigpetro         ###   ########.fr       */
+/*   Updated: 2024/04/23 03:20:10 by senate           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <pipex.h>
 
-static void	_left_proc(t_pipex *pip, char **env, char *file_name)
+static void	_start_proc(t_pipex *pip, char **env, char *file_name, int index)
 {
 	int infile;
 
 	infile = open(file_name, O_RDONLY);
 	if (infile < 0)
 	{
-		perror("pipex");
+		perror("pipex 1");
 		exit(1);
 	}
 	dup2(infile, STDIN_FILENO);
@@ -27,69 +27,69 @@ static void	_left_proc(t_pipex *pip, char **env, char *file_name)
 	close(infile);
 	close(pip->fd[pip->fd_index++]);
 	close(pip->fd[pip->fd_index++]);
-	execve(pip->cmds[0][0], pip->cmds[0], env);
+	execve(pip->cmds[index][0], pip->cmds[index], env);
 	ft_putstr_fd("command not found\n", 2);
 	destroy(pip);
-
 }
 
-static void	_mid_proc(t_pipex *pip, char **env)
+static void	_mid_proc(t_pipex *pip, char **env, int index)
 {
 	dup2(pip->fd[pip->fd_index], STDIN_FILENO);
 	dup2(pip->fd[pip->fd_index + 1], STDOUT_FILENO);
 	close(pip->fd[pip->fd_index++]);
 	close(pip->fd[pip->fd_index++]);
-	execve(pip->cmds[0][0], pip->cmds[0], env);
+	execve(pip->cmds[index][0], pip->cmds[index], env);
 	ft_putstr_fd("command not found\n", 2);
 	destroy(pip);
 }
 
-static void	_right_proc(t_pipex *pip, char **env, char *file_name)
+static void	_end_proc(t_pipex *pip, char **env, char *file_name, int index)
 {
 	int outfile;
 
 	outfile = open(file_name, O_WRONLY | O_CREAT | O_TRUNC, 0644);
 	if (outfile < 0)
 	{
-		perror("pipex");
+		perror("pipex 2");
 		exit(1);
 	}
-	dup2(fd[0], STDIN_FILENO);
+	dup2(pip->fd[pip->fd_index], STDIN_FILENO);
 	dup2(outfile, STDOUT_FILENO);
 	close(outfile);
-	close(fd[0]);
-	close(fd[1]);
-	execve(pip.right[0], pip.right, env);
+	close(pip->fd[pip->fd_index++]);
+	close(pip->fd[pip->fd_index]);
+	execve(pip->cmds[index][0], pip->cmds[index], env);
 	ft_putstr_fd("command not found\n", 2);
 	destroy(pip);
 }
 
-int	pipex(char **env, char **av, t_pipex *pip)
+void	pipex(char **env, char **av, t_pipex *pip, int ac)
 {
-	pid_t	pid1;
-	pid_t	pid2;
+	pid_t	pid;
+	int		i;
 
-	pid1 = fork();
-	if (pid1 < 0)
+	i = -1;
+	while (++i < pip->cmds_count)
 	{
-		perror("pipex");
-		exit(1);
+		pid = fork();
+		if (pid < 0)
+		{
+			perror("pipex 3");
+			exit(1);
+		}
+		if (!pid)
+		{
+			if (!i)
+				_start_proc(pip, env, av[1], pip->cmds_index);
+			else if (i == pip->cmds_count - 1)
+				_end_proc(pip, env, av[ac - 1], pip->cmds_index);
+			else
+				_mid_proc(pip, env, pip->cmds_index);
+		}
+		// close(pip->fd[pip->fd_index - 2]);
+		// close(pip->fd[pip->fd_index - 1]);
+		pip->cmds_index++;
 	}
-	if (!pid1)
-		_left_proc(pip, env, av[1]);
-	pid2 = fork();
-	if (pid2 < 0)
-	{
-		perror("pipex");
-		exit(1);
-	}
-	if (!pid2)
-		_right_proc(fd, pip, env, av[4]);
-	close(fd[0]);
-	close(fd[1]);
-	waitpid(pid1, NULL, 0);
-	waitpid(pid2, NULL, 0);
-	return (0);
 }
 
 int	main(int ac, char **av, char **env)
@@ -98,17 +98,24 @@ int	main(int ac, char **av, char **env)
 
 	if (ac < 5)
 	{
-		perror("pipex");
+		perror("pipex 4");
 		exit(1);
 	}
 	pip.cmds_count = ac - 3;
 	if (check_pipex(&pip, av, env))
 	{
 		destroy(&pip);
-		perror("pipex");
+		perror("pipex 5");
+		system("leaks pipex");
 		exit(1);
 	}
 	pip.fd_index = 0;
 	pip.cmds_index = 0;
-	return (pipex(env, av, &pip));
+	// while(pip.fd[pip.fd_index])
+	pipex(env, av, &pip, ac);
+	while (wait(NULL) != -1)
+		(void)ac;
+	destroy(&pip);
+	system("leaks pipex");
+	return (0);
 }
