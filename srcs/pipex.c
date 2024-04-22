@@ -3,73 +3,112 @@
 /*                                                        :::      ::::::::   */
 /*   pipex.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: senate <senate@student.42.fr>              +#+  +:+       +#+        */
+/*   By: tigpetro <tigpetro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/04/12 02:46:21 by senate            #+#    #+#             */
-/*   Updated: 2024/04/16 04:26:32 by senate           ###   ########.fr       */
+/*   Updated: 2024/04/22 20:18:24 by tigpetro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <pipex.h>
 
-static void	_child_proc(int	*fd, t_cmds cmds, char **newEnv, int infile)
+static void	_left_proc(t_pipex *pip, char **env, char *file_name)
 {
-	wait(NULL);
+	int infile;
+
+	infile = open(file_name, O_RDONLY);
+	if (infile < 0)
+	{
+		perror("pipex");
+		exit(1);
+	}
 	dup2(infile, STDIN_FILENO);
-	dup2(fd[1], STDOUT_FILENO);
-	close(fd[0]);
-	close(fd[1]);
-	execve(cmds.left[0], cmds.left, newEnv);
+	dup2(pip->fd[pip->fd_index + 1], STDOUT_FILENO);
+	close(infile);
+	close(pip->fd[pip->fd_index++]);
+	close(pip->fd[pip->fd_index++]);
+	execve(pip->cmds[0][0], pip->cmds[0], env);
+	ft_putstr_fd("command not found\n", 2);
+	destroy(pip);
+
 }
 
-static void _parent_proc(int	*fd, t_cmds cmds, char **newEnv, int outfile)
+static void	_mid_proc(t_pipex *pip, char **env)
 {
+	dup2(pip->fd[pip->fd_index], STDIN_FILENO);
+	dup2(pip->fd[pip->fd_index + 1], STDOUT_FILENO);
+	close(pip->fd[pip->fd_index++]);
+	close(pip->fd[pip->fd_index++]);
+	execve(pip->cmds[0][0], pip->cmds[0], env);
+	ft_putstr_fd("command not found\n", 2);
+	destroy(pip);
+}
+
+static void	_right_proc(t_pipex *pip, char **env, char *file_name)
+{
+	int outfile;
+
+	outfile = open(file_name, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+	if (outfile < 0)
+	{
+		perror("pipex");
+		exit(1);
+	}
 	dup2(fd[0], STDIN_FILENO);
 	dup2(outfile, STDOUT_FILENO);
+	close(outfile);
 	close(fd[0]);
 	close(fd[1]);
-	execve(cmds.right[0], cmds.right, newEnv);
+	execve(pip.right[0], pip.right, env);
+	ft_putstr_fd("command not found\n", 2);
+	destroy(pip);
 }
 
-int	pipex(char **av, char **newEnv, t_cmds cmds)
+int	pipex(char **env, char **av, t_pipex *pip)
 {
-	int	fd[2];
-	int	pid;
-	int	infile;
-	int	outfile;
+	pid_t	pid1;
+	pid_t	pid2;
 
-	infile = open(av[1], O_WRONLY);
-	outfile = open(av[4], O_RDWR | O_CREAT | O_TRUNC, 0777);
-	if (pipe(fd) == -1)
-		return (2);
-	pid = fork();
-	if (pid < 0)
-		return (3);
-	if (!pid)
-		_child_proc(fd, cmds, newEnv, infile);
-	else
-		_parent_proc(fd, cmds, newEnv, outfile);
-	waitpid(pid, 0, 0);
+	pid1 = fork();
+	if (pid1 < 0)
+	{
+		perror("pipex");
+		exit(1);
+	}
+	if (!pid1)
+		_left_proc(pip, env, av[1]);
+	pid2 = fork();
+	if (pid2 < 0)
+	{
+		perror("pipex");
+		exit(1);
+	}
+	if (!pid2)
+		_right_proc(fd, pip, env, av[4]);
+	close(fd[0]);
+	close(fd[1]);
+	waitpid(pid1, NULL, 0);
+	waitpid(pid2, NULL, 0);
 	return (0);
 }
 
 int	main(int ac, char **av, char **env)
 {
-	char	**newEnv;
-	t_cmds	cmds;
+	t_pipex	pip;
 
-	if (ac != 5)
+	if (ac < 5)
 	{
-		perror("Program must take 4 arguments\n");
+		perror("pipex");
 		exit(1);
 	}
-	else if (!av[2] || !av[3])
+	pip.cmds_count = ac - 3;
+	if (check_pipex(&pip, av, env))
 	{
-		perror("Empty command input\n");
+		destroy(&pip);
+		perror("pipex");
 		exit(1);
 	}
-	newEnv = get_env(get_path(env));
-	cmds = get_commands(av, newEnv);
-	pipex(av, newEnv, cmds);
-	return (0);
+	pip.fd_index = 0;
+	pip.cmds_index = 0;
+	return (pipex(env, av, &pip));
 }

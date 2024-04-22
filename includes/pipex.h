@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   pipex.h                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: senate <senate@student.42.fr>              +#+  +:+       +#+        */
+/*   By: tigpetro <tigpetro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/04/12 02:46:40 by senate            #+#    #+#             */
-/*   Updated: 2024/04/16 04:19:47 by senate           ###   ########.fr       */
+/*   Updated: 2024/04/22 20:18:07 by tigpetro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,21 +20,27 @@
 # include <sys/types.h>
 # include <sys/wait.h>
 
-typedef struct s_cmds
+typedef struct s_pipex
 {
-	char	**left;
-	char	**right;
-}	t_cmds;
-
+	char	***cmds;
+	int		cmds_count;
+	int		*fd;
+	int		fd_index;
+	int		cmds_index;
+	int		is_doc;
+	char	**new_env;
+}	t_pipex;
 
 // pipex
-int		pipex(char **av, char **env, t_cmds cmds);
+int		pipex(char **env, char **av, t_pipex *pip);
 
 // utils
-char	**get_env(char *path);
+void	destroy(t_pipex *pip);
+int		get_env(t_pipex *pip, char *path);
 char	*get_path(char **env);
 
 // checks
-t_cmds	get_commands(char **av, char **newEnv);
+int		check_pipex(t_pipex *pip, char **av, char **env);
+void	get_commands(char **av, t_pipex *pip);
 
 #endif //PIPEX_H
