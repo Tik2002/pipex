@@ -15,7 +15,7 @@ all : $(NAME)
 
 $(NAME) : $(LIBFT) $(PRINTF) $(OBJS)
 	$(CC) $(LIBFT) $(PRINTF) $(OBJS) -o $(NAME)
-
+# -fsanitize=address
 $(LIBFT) :
 	make -C $(LIBFTPATH) all
 
@@ -24,7 +24,7 @@ $(PRINTF) :
 
 $(SRCSPATH)%.o : $(SRCSPATH)%.c
 	$(CC) $(CFLAGS) $< -o $@
-
+# -fsanitize=address
 clean :
 	make -C $(PRINTF_PATH) clean
 	make -C $(LIBFTPATH) clean

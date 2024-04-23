@@ -3,32 +3,53 @@
 /*                                                        :::      ::::::::   */
 /*   pipex_utils.c                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: senate <senate@student.42.fr>              +#+  +:+       +#+        */
+/*   By: tigpetro <tigpetro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/04/16 02:17:58 by senate            #+#    #+#             */
-/*   Updated: 2024/04/23 03:08:29 by senate           ###   ########.fr       */
+/*   Updated: 2024/04/23 21:35:06 by tigpetro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <pipex.h>
 
+void	close_pipes(t_pipex *pip)
+{
+	int	i;
+
+	i = 0;
+	while(i < (pip->cmds_count - 1) * 2)
+		close(pip->fd[i++]);
+}
+
+void	malloc_script(t_pipex *pip, char *av, int index)
+{
+	pip->cmds[index] = (char **)malloc(sizeof(char *) * 3);
+	if (!pip->cmds[index])
+	{
+		perror("pipex");
+		exit(1);
+	}
+	pip->cmds[index][0] = ft_strdup("/bin/bash");
+	pip->cmds[index][1] = ft_strdup(av);
+	pip->cmds[index][2] = 0;
+}
+
 void	destroy(t_pipex *pip)
 {
-	while (*(pip->new_env))
+	int	i;
+	int	j;
+
+	i = 0;
+	while (pip->new_env[i])
+		free(pip->new_env[i++]);
+	i = 0;
+	while (i < pip->cmds_count)
 	{
-		free(*(pip->new_env));
-		pip->new_env++;
+		j = 0;
+		while (pip->cmds[i][j])
+			free(pip->cmds[i][j++]);
+		free(pip->cmds[i++]);
 	}
-	// while (*(pip->cmds))
-	// {
-	// 	while (**(pip->cmds))
-	// 	{
-	// 		free(**(pip->cmds));
-	// 		(*(pip->cmds))++;
-	// 	}
-	// 	free(*(pip->cmds));
-	// 	pip->cmds++;
-	// }
 	free(pip->cmds);
 	free(pip->new_env);
 	free(pip->fd);
@@ -42,7 +63,7 @@ char	*get_path(char **env)
 	i = -1;
 	while (env[++i])
 	{
-		path = ft_strnstr(env[i], "PATH=/", ft_strlen(env[i]));
+		path = ft_strnstr(env[i], "PATH=", ft_strlen(env[i]));
 		if (path)
 		{
 			while (*path != '/')

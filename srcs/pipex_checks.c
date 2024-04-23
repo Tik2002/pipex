@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   pipex_checks.c                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: senate <senate@student.42.fr>              +#+  +:+       +#+        */
+/*   By: tigpetro <tigpetro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/04/16 02:32:54 by senate            #+#    #+#             */
-/*   Updated: 2024/04/23 02:57:46 by senate           ###   ########.fr       */
+/*   Updated: 2024/04/23 22:26:10 by tigpetro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,18 @@ static char	*_cmd_with_path(char *cmd, char **new_env)
 			return (res);
 		free(res);
 	}
-	return (ft_strdup("/bin/bash"));
+	return (0);
+}
+
+void	check_here_doc(char **av, t_pipex *pip)
+{
+	pip->doc_flag = 0;
+	pip->limiter = 0;
+	if (!ft_strncmp(av[1], "here_doc", ft_strlen(av[1])))
+	{
+		pip->doc_flag = 1;
+		pip->limiter = ft_strdup(av[2]);
+	}
 }
 
 int	get_commands(char **av, t_pipex *pip)
@@ -36,17 +47,26 @@ int	get_commands(char **av, t_pipex *pip)
 	int		i;
 	char	*cmd;
 
-	i = 0;
+	i = pip->doc_flag;
 	pip->cmds = (char ***)malloc(sizeof(char **) * pip->cmds_count);
 	while (i < pip->cmds_count)
 	{
-		pip->cmds[i] = ft_split(av[i + 2], ' ');
-		cmd = _cmd_with_path(pip->cmds[i][0], pip->new_env);
-		free(pip->cmds[i][0]);
-		pip->cmds[i][0] = ft_strdup(cmd);
-		if (!pip->cmds[i][0])
-			return (1);
-		free(cmd);
+		if (access(av[i + 2], X_OK) || !ft_strchr(av[i + 2], '/'))
+		{
+			pip->cmds[i] = ft_split(av[i + 2], ' ');
+			cmd = _cmd_with_path(pip->cmds[i][0], pip->new_env);
+			if (!cmd)
+				return (1);
+			free(pip->cmds[i][0]);
+			pip->cmds[i][0] = ft_strdup(cmd);
+			if (!pip->cmds[i][0])
+				return (1);
+			free(cmd);
+		}
+		else if (!access(av[i + 2], X_OK) && ft_strchr(av[i + 2], '/'))
+			malloc_script(pip, av[i + 2], i);
+		for(int j = 0; pip->cmds[i][j]; j++)
+			ft_printf("cmd N%d string N%d) %s\n", i, j, pip->cmds[i][j]);
 		i++;
 	}
 	return (0);
