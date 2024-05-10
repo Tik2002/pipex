@@ -6,7 +6,7 @@
 /*   By: tigpetro <tigpetro@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/04/12 02:46:40 by senate            #+#    #+#             */
-/*   Updated: 2024/04/23 20:48:30 by tigpetro         ###   ########.fr       */
+/*   Updated: 2024/04/25 20:59:43 by tigpetro         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,12 +20,14 @@
 # include <sys/types.h>
 # include <sys/wait.h>
 
-#  define BUFFER_SIZE 1024
+# define BUFFER_SIZE 1024
 
 typedef struct s_pipex
 {
 	char	***cmds;
+	char	**script;
 	int		cmds_count;
+	int		cmds_err_count;
 	int		*fd;
 	int		fd_index;
 	int		cmds_index;
@@ -43,7 +45,7 @@ char	*gnl_strdup(char **line);
 void	gnl_read(int fd, char **line);
 
 // pipex
-void	pipex(char **env, char **av, t_pipex *pip, int ac);
+void	pipex(char **env, char **av, t_pipex *pip);
 
 // utils
 void	close_pipes(t_pipex *pip);
@@ -51,11 +53,17 @@ void	destroy(t_pipex *pip);
 int		get_env(t_pipex *pip, char *path);
 char	*get_path(char **env);
 
+// process
+void	start_proc(t_pipex *pip, char **av, char **env, int i);
+
 // checks
 void	check_here_doc(char **av, t_pipex *pip);
 int		check_pipex(t_pipex *pip, char **av, char **env);
-int		get_commands(char **av, t_pipex *pip);
-void	malloc_script(t_pipex *pip, char *av, int index);
 
+// script
+void	malloc_script(t_pipex *pip, int index);
+
+// more utils
+int		get_commands(char **av, t_pipex *pip);
 
 #endif //PIPEX_H
